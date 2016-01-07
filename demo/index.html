@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="src/demo.css" rel="stylesheet" type="text/css">
+	<script src="demo.js"></script>
+</head>
+<body>
+	<div class="controls">
+		<h1><img src="assets/grlg-logo.png"></h1>
+		<h3>settings</h3>
+		<span>
+			<label>
+				Block size (in pixels)
+				<input type="text" name="block-size" value="5">
+			</label>
+		</span>
+		<span>
+			<label>
+				Grid width
+				<input type="text" name="grid-width" value="20">
+			</label>
+		</span>
+		<span>
+			<label>
+				Grid height
+				<input type="text" name="grid-height" value="20">
+			</label>
+		</span>
+		<span>
+			<label>
+				Minimum amount of empty blocks
+				<input type="text" name="min" value="150">
+			</label>
+		</span>
+		<span>
+			<label>
+				Maximum amount of empty blocks
+				<input type="text" name="max" value="250">
+			</label>
+		</span>
+		<span>
+			Density (low = more tunnels / high = more open space)
+			<input type="range" name="density" min="0" max="100" step="1" value="7">
+			<label for="density">0.07</label>
+		</span>
+		<span>
+			<label>
+				propagation speed
+				<input type="number" name="speed" value="1">
+			</label>
+		</span>
+
+		<button class="generate">Generate Level</button>
+
+		<h3>presets</h3>
+		<!-- Preset order: block size, width&height, min, max, density, speed -->
+		<button preset="2,100,3000,3000,100,20">Cloud</button>
+		<button preset="1,200,10000,10000,3,10">Termite</button>
+		<button preset="1,200,10000,10000,0,1">Worm</button>
+		<button preset="10,20,100,150,10,1">Dungeon</button>
+		<button preset="10,20,100,150,1,1">Dungeon-tunnel</button>
+		<button preset="10,20,100,150,35,1">Dungeon-open</button>
+		<button preset="2,100,9000,9000,100,100">Treasure Map</button>
+	</div>
+
+	<div class="levels">
+	</div>
+</body>
+</html>
