@@ -7,13 +7,16 @@ define([
 ) {
   'use strict';
 
+  window.maps = [];
+
   //loads a preset
-  function preset (scale, size, min, max, density, speed) {
+  function preset (scale, size, min, max, density, linearity, speed) {
     $('[name=block-size]').val(scale);
     $('[name=grid-width], [name=grid-height]').val(size);
     $('[name=min]').val(min);
     $('[name=max]').val(max);
-    $('[name=density]').val(density);
+    $('[name=density]').val(density).trigger('change');
+    $('[name=linearity]').val(linearity).trigger('change');
     $('[name=speed]').val(speed);
   }
 
@@ -24,8 +27,9 @@ define([
   $('button').on('click', createMap);
 
   //update slider label
-  $('[name=density]').on('input change', function () {
-    $('label[for=density]').text(Number($('[name=density]').val()) / 100);
+  $('[type=range]').on('input change', function (event) {
+    var name = $(event.target).attr('name');
+    $('label[for=' + name + ']').text(Number($('[name=' + name + ']').val()) / 100);
   });
 
   //map generation function
@@ -40,6 +44,7 @@ define([
     var min = Number($('[name=min]').val());
     var max = Number($('[name=max]').val());
     var density = Number($('[name=density]').val()) / 100;
+    var linearity = Number($('[name=linearity]').val()) / 100;
     var speed = Number($('[name=speed]').val());
     var size = Number($('[name=block-size]').val());
 
@@ -53,6 +58,7 @@ define([
       max: max,
       density: density,
       speed: speed,
+      linearity: linearity
     },
     //done
     function () {
@@ -62,6 +68,8 @@ define([
     function () {
       map.print(size, canvas);
     });
+
+    window.maps.push(map);
   }
 
   createMap();

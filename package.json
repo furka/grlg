@@ -1,6 +1,6 @@
 {
   "name": "grlg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Generic Random Level Generator",
   "main": "grlg.js",
   "scripts": {
