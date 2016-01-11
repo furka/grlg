@@ -1,20 +1,204 @@
 (function () {
   'use strict';
 
-  /**
-   * Helper function to shuffle an array, courtesy of https://stackoverflow.com/a/6274381
-   * @private
-   * @param {Array} o - The array that will be shuffled
-   * @return {Array} The shuffled array
-   **/
+  //Shuffle an array, courtesy of https://stackoverflow.com/a/6274381
   function shuffle (o) {
     for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
   }
 
+  //ensures a value is a number between 0 and 1
+  function percent (x) {
+    x = Number(x) || 0;
+    x = Math.max(0, x);
+    x = Math.min(1, x);
+    return x;
+  }
+
+  var CARDINAL_DIRECTIONS = [
+    {x: 0, y: 0 - 1}, //north
+    {x: 0 + 1, y: 0}, //east
+    {x: 0, y: 0 + 1}, //south
+    {x: 0 - 1, y: 0}  //west
+  ];
+  //returns an array of open coordinates in the cardinal directions around a point
+  function getOpenDirections (map, x, y, offset) {
+    var output = [];
+    var index;
+
+    offset = parseInt(offset, 10) || Math.floor(Math.random() * 4);
+
+    for (var i = 0, length = CARDINAL_DIRECTIONS.length; i < length; i += 1) {
+      index = (i + offset) % length;
+
+      if (typeof map.get(x + CARDINAL_DIRECTIONS[index].x, y + CARDINAL_DIRECTIONS[index].y) === 'undefined') {
+        output.push(index);
+      }
+    }
+
+    return output;
+  }
+
+  //returns the next index for propagation
+  function grabActiveIndex (map) {
+    return map._activeIndexes.splice(Math.floor(Math.random() * map._activeIndexes.length), 1)[0];
+  }
+
+  //triggers propagation X times based on speed and schedules next step
+  function generateStep (map, options, callback, update) {
+    var propagating = true;
+
+    for (var i = 0; i < options.speed; i += 1) {
+      propagating = propagating && propagate(
+        map,
+        options.min,
+        options.max,
+        options.density,
+        options.linearity
+      );
+    }
+
+    if (propagating) {
+      setTimeout(generateStep.bind(null, map, options, callback, update, true), 10);
+    } else if (typeof callback === 'function') {
+      callback(map);
+    }
+
+    if (typeof update === 'function') {
+      update(map);
+    }
+  }
+
+  //finds a closed cell on the map that touches an empty cell and turn it into an open cell so that we can continue expanding
+  function breakThrough (map) {
+    var x;
+    var y;
+    var index;
+
+    for (var i = map._history.length - 1; i >= 0; i -= 1) {
+      index = map._history[i];
+      x = index % map.width;
+      y = Math.floor(index / map.height);
+
+      if (
+        x > 0 &&
+        x < map.width - 1 &&
+        y > 0 &&
+        y < map.height - 1 &&
+        getOpenDirections(map, x, y).length
+      ) {
+        map._cells[index] = true;
+        map._activeIndexes.push(index);
+        return index;
+      }
+    }
+  }
+
+  //propagates around a single cell
+  // - picks an active cell
+  // - generates its surrounding cells
+  // - depending on minimum, maximum and density, the new cells will have a chance to be open or closed
+  // returns false when propagation stops
+  function propagate (map, minimum, maximum, density, linearity) {
+
+    //determine whether we are expanding or closing off
+    var expanding = map.openCount < minimum;
+    var closing = maximum && map.openCount >= maximum;
+
+    //determine whether it's safe to exit or if we need to break through a wall
+    if (!map._activeIndexes.length) {
+      if (expanding) {
+        breakThrough(map);
+      } else {
+        return false;
+      }
+    }
+
+    var i;
+
+    //pick a cell to expand
+    var index = grabActiveIndex(map);
+    var x = index % map.width;
+    var y = Math.floor(index / map.height);
+
+    var propagationDirection = map._propagationDirections[index];
+    if (Math.random() > linearity) {
+      propagationDirection = undefined;
+    }
+    var d = getOpenDirections(map, x, y, propagationDirection);
+    var direction;
+
+    //close cells against map borders
+    for (i = d.length - 1; i >= 0; i -= 1) {
+      direction = CARDINAL_DIRECTIONS[d[i]];
+      if (
+        direction.x + x <= 0 ||
+        direction.x + x >= map.width - 1 ||
+        direction.y + y <= 0 ||
+        direction.y + y >= map.height - 1
+      ) {
+        closeCell(map, direction.x + x, direction.y + y, d[i]);
+        d.splice(i, 1);
+      }
+    }
+
+    if (!d.length) {
+      return true;
+    }
+
+    //ensure a minimum of 1 open cell when in expansion mode
+    if (expanding) {
+      direction = CARDINAL_DIRECTIONS[d[0]];
+      openCell(map, direction.x + x, direction.y + y, d[0]);
+      d.splice(0, 1);
+    }
+
+    //shuffle remaining
+    d = shuffle(d);
+
+    //handle remaining cells based on density
+    for (i = d.length - 1; i >= 0; i -= 1) {
+      direction = CARDINAL_DIRECTIONS[d[i]];
+      if (!closing && Math.random() <= density) {
+        openCell(map, direction.x + x, direction.y + y, d[i]);
+      } else {
+        closeCell(map, direction.x + x, direction.y + y, d[i]);
+      }
+    }
+
+    return true;
+  }
+
+  //marks x*y coordinate as being open
+  function openCell (map, x, y, offset) {
+    map.openCount += 1;
+
+    var index = x + y * map.width;
+
+    map._cells[index] = true;
+    map._propagationDirections[index] = offset;
+    map._activeIndexes.push(index);
+    map._history.push(index);
+    map.last = index;
+
+    return index;
+  }
+
+  //marks x*y coordinate as being closed
+  function closeCell (map, x, y, offset) {
+    var index = x + y * map.width;
+
+    map._cells[index] = false;
+    map._propagationDirections[index] = offset;
+    map._history.push(index);
+
+    return index;
+  }
+
+
+
+
   /**
-   * A map will be composed out of cells
-   * @constructs Map
    * @param {number} width  - The width of the map
    * @param {number} height - The height of the map
    */
@@ -25,21 +209,23 @@
     this.width = width;
     this.height = height;
 
-    /** @private Keeps track of cell instances */
     this._cells = [];
 
-    /** @private Keeps track of which cells are open */
-    this._openCells = [];
+    //stores the order in which cells have been generated
+    this._history = [];
 
-    /** @private Array of indexes of active cells */
+    //used during map generation
     this._activeIndexes = [];
+
+    //used during map generation for linearity
+    this._propagationDirections = [];
   };
 
   /**
-   * Get the object stored at x*y coordinates
+   * Determines whether an x*y coordinate has an open cell
    * @param {number} x - The x coordinate
    * @param {number} y - The x coordinate
-   * @return The object stored at these coordinates. By default these will return an object like `{x: 0, y: 0}`. If the `open` or `close` function of a Map instance have been overwritten, then it this will return whatever type of object was created by them.
+   * @return {boolean|undefined} returns true if for an open cell, false for a closed cell and undefined if no cell exists at these coordinates
    */
   Map.prototype.get = function (x, y) {
     x = Math.floor(x);
@@ -48,80 +234,24 @@
     return this._cells[x + y * this.width];
   };
 
-  /**
-   * Determines whether an x*y coordinate has an open cell
-   * @param {number} x - The x coordinate
-   * @param {number} y - The x coordinate
-   * @return {boolean} returns true if these coordinate hold an open cell
+  /** @function generate
+   * This function starts the map generation process
+   *
+   * @param {object} [options] - Options for map generation
+   * @param {number} [options.density=0] - Controls density of open cells. Value between 0 and 1. A lower value generates tunnels while a higher value generates more open space
+   * @param {number} [options.linearity=0] - Controls linearity of open cells. Value between 0 and 1. The closer the value is to 1, the straighter tunnels will be
+   * @param {number} [options.speed=1] - Amount of cells that will be generated each loop
+   * @param {number} [options.min=20] - Minimum amount of open cells that will be generated
+   * @param {number} [options.max] - Maximum amount of open cells that will be generated
+   *
+   * @callback done - Called wen map is done generating
+   * @callback update - Called on each iteration step
    */
-  Map.prototype.isOpen = function (x, y) {
-    x = Math.floor(x);
-    y = Math.floor(y);
-
-    return !!this._openCells[x + y * this.width];
-  };
-
-  var CARDINAL_DIRECTIONS = [
-    {x: 0 + 1, y: 0},
-    {x: 0, y: 0 + 1},
-    {x: 0 - 1, y: 0},
-    {x: 0, y: 0 - 1}
-  ];
-  Map.prototype._getOpenDirections = function (x, y) {
-    var output = [];
-
-    for (var i = 0; i < CARDINAL_DIRECTIONS.length; i += 1) {
-      if (!this.get(x + CARDINAL_DIRECTIONS[i].x, y + CARDINAL_DIRECTIONS[i].y)) {
-        output.push({
-          x: x + CARDINAL_DIRECTIONS[i].x,
-          y: y + CARDINAL_DIRECTIONS[i].y
-        });
-      }
-    }
-
-    return output;
-  };
-
-  Map.prototype._grabActiveIndex = function () {
-    return this._activeIndexes.splice(Math.floor(Math.random() * this._activeIndexes.length), 1)[0];
-  };
-
-  Map.prototype.open = function (x, y) {
-    return {x: x, y: y};
-  };
-
-  Map.prototype.close = Map.prototype.open;
-
-  Map.prototype._open = function (x, y) {
-    this.openCount += 1;
-
-    var index = x + y * this.width;
-
-    this._cells[index] = this.open(x, y);
-    this._openCells[index] = true;
-    this._activeIndexes.push(index);
-    this.last = index;
-
-    return index;
-  };
-
-  Map.prototype._close = function (x, y) {
-    var index = x + y * this.width;
-
-    this._cells[index] = this.close(x, y);
-
-    return index;
-  };
-
-  Map.prototype.generate = function (options, callback, update) {
+  Map.prototype.generate = function (options, done, update) {
     options = options || {};
 
-    //determines the density of open cells
-    //value between 0 and 1
-    //a lower value means more tunnels, a higher value means more open space
-    options.density = Number(options.density) || 0;
-    options.density = Math.max(0, options.density);
-    options.density = Math.min(1, options.density);
+    options.density = percent(options.density);
+    options.linearity = percent(options.linearity);
 
     //determines how many cells will be placed on each iteration
     //a higher value goes more quickly but could cause the browser to hang
@@ -132,84 +262,14 @@
     options.max = Math.max(options.min, options.max);
 
     //reset all arrays
-    this._activeIndexes.length = this._openCells.length = this._cells.length = 0;
+    this._activeIndexes.length = this._cells.length = 0;
     this.openCount = 0;
 
     //create start cell
-    this.first = this._open(this.width / 2, this.height / 2);
+    this.first = openCell(this, this.width / 2, this.height / 2);
 
     //kick off generator
-    this._generateStep(options, callback, update);
-  };
-
-  Map.prototype._generateStep = function (options, callback, update) {
-    for (var i = 0; i < options.speed; i += 1) {
-      this._propagate(options.min, options.max, options.density);
-    }
-
-    if (this._activeIndexes.length) {
-      setTimeout(this._generateStep.bind(this, options, callback, update, true), 10);
-    } else if (typeof callback === 'function') {
-      callback(this);
-    }
-
-    if (typeof update === 'function') {
-      update(this);
-    }
-  };
-  Map.prototype._propagate = function (minimum, maximum, density) {
-    if (!this._activeIndexes.length) {
-      return;
-    }
-
-    var i;
-
-    //determine whether we are expanding or closing off
-    var expanding = this.openCount < minimum;
-    var closing = maximum && this.openCount >= maximum;
-
-    //pick a random cell from our set of active cells
-    var index = this._grabActiveIndex();
-    var x = index % this.width;
-    var y = Math.floor(index / this.height);
-
-    //get available directions
-    var directions = this._getOpenDirections(x, y);
-
-    //close cell against borders
-    for (i = directions.length - 1; i >= 0; i -= 1) {
-      if (
-        directions[i].x === 0 ||
-        directions[i].x === this.width - 1 ||
-        directions[i].y === 0 ||
-        directions[i].y === this.height - 1
-      ) {
-        this._close(directions[i].x, directions[i].y);
-        directions.splice(i, 1);
-      }
-    }
-
-    if (!directions.length) {
-      return;
-    }
-
-    //shuffle remaining
-    directions = shuffle(directions);
-
-    //ensure at least one is open when expanding
-    if (expanding) {
-      this._open(directions[0].x, directions[0].y);
-      directions.splice(0, 1);
-    }
-
-    //handle remaining directions normally
-    for (i = directions.length - 1; i >= 0; i -= 1) {
-      if (!closing && Math.random() <= density) {
-        this._open(directions[i].x, directions[i].y);
-      } else {
-        this._close(directions[i].x, directions[i].y);
-      }
-    }
+    generateStep(this, options, done, update);
   };
 
   /** @function print
@@ -233,7 +293,7 @@
     ctx.strokeStyle = 'rgba(200,200,200,1)';
 
     for (var i = 0; i < this._cells.length; i += 1) {
-      if (!this._cells[i]) {
+      if (typeof this._cells[i] === 'undefined') {
         continue;
       }
 
@@ -244,7 +304,7 @@
         ctx.fillStyle = 'rgba(0,255,255,1)';
       } else if (i === this.last) {
         ctx.fillStyle = 'rgba(255,0,255,1)';
-      } else if (this.isOpen(x, y)) {
+      } else if (this._cells[i]) {
         ctx.fillStyle = 'rgba(255,255,255,1)';
       } else {
         ctx.fillStyle = 'rgba(50,50,50,1)';
