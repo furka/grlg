@@ -9733,7 +9733,6 @@ return jQuery;
       ) {
         map._cells[index] = true;
         map._activeIndexes.push(index);
-        console.log('breaking through', x, y)
         return index;
       }
     }
@@ -9753,9 +9752,11 @@ return jQuery;
     //determine whether it's safe to exit or if we need to break through a wall
     if (!map._activeIndexes.length) {
       if (expanding) {
-        breakThrough(map);
+        if (!breakThrough(map)) {
+          return false; //unable to break through
+        }
       } else {
-        return false;
+        return false; //no active cells, and we have enough open ones
       }
     }
 
