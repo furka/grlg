@@ -1,13 +1,23 @@
 {
   "name": "grlg",
   "version": "1.0.2",
-  "description": "Generic Random Level Generator",
-  "main": "grlg.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "A Generic Random Level Generator written in Javascript",
+  "main": "grlg.min.js",
+  "keywords": [
+    "javascript",
+    "random",
+    "level",
+    "generator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/furka/grlg.git"
   },
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "author": {
+    "name": "Thomas Vranckx",
+    "email": "thomas.vranckx@gmail.com"
+  },
   "devDependencies": {
     "almond": "^0.3.1",
     "grunt": "^0.4.5",
