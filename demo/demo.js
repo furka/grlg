@@ -9966,7 +9966,23 @@ return jQuery;
     return canvas;
   };
 
-  define('grlg',[], function () { return Map; });
+  //for node.js
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Map;
+
+  //for require.js
+  } else if (typeof define === 'function' && define.amd) {
+    define('grlg', [], function () {
+      return Map;
+    });
+
+  //for wild cowboys
+  } else {
+    var root = (typeof self == 'object' && self.self === self && self) ||
+      (typeof global == 'object' && global.global === global && global);
+
+    root.GRLG = Map;
+  }
 
 }());
 define('main',[
