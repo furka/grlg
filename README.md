@@ -1,5 +1,9 @@
 ## ![Alt text](demo/assets/grlg-logo.png) Generic Random Level Generator
 
+## TO DO
+remove built-in loop
+add `map.configure(options)`
+
 ## Installation
 tba
 node.js
