@@ -9899,10 +9899,10 @@ return jQuery;
 
   /** @function generateAll
    * Asynchronously generates the entire map
-   * @callback done - Triggered when map generation is finished
+   * @callback completed - Triggered when map generation is finished
    * @callback update - Triggered on every generation step
    */
-  Map.prototype.generateAll = function (done, update) {
+  Map.prototype.generateAll = function (completed, update) {
     this.generate();
 
     if (typeof update === 'function') {
@@ -9910,13 +9910,12 @@ return jQuery;
     }
 
     if (this.completed) {
-      if (typeof done === 'function') {
-        done(this);
+      if (typeof completed === 'function') {
+        completed(this);
       }
     } else {
-      setTimeout(this.generateAll.bind(this, done, update), 10);
+      setTimeout(this.generateAll.bind(this, completed, update), 10);
     }
-
   };
 
   /** @function configure
