@@ -9,7 +9,7 @@
 
   //ensures a value is a number between 0 and 1
   function percent (x) {
-    x = Number(x) || 0;
+    x = parseFloat(x) || 0;
     x = Math.max(0, x);
     x = Math.min(1, x);
     return x;
@@ -44,31 +44,6 @@
     return map._activeIndexes.splice(Math.floor(Math.random() * map._activeIndexes.length), 1)[0];
   }
 
-  //triggers propagation X times based on speed and schedules next step
-  function generateStep (map, options, callback, update) {
-    var propagating = true;
-
-    for (var i = 0; i < options.speed; i += 1) {
-      propagating = propagating && propagate(
-        map,
-        options.min,
-        options.max,
-        options.density,
-        options.linearity
-      );
-    }
-
-    if (propagating) {
-      setTimeout(generateStep.bind(null, map, options, callback, update, true), 10);
-    } else if (typeof callback === 'function') {
-      callback(map);
-    }
-
-    if (typeof update === 'function') {
-      update(map);
-    }
-  }
-
   //finds a closed cell on the map that touches an empty cell and turn it into an open cell so that we can continue expanding
   function breakThrough (map) {
     var x;
@@ -100,6 +75,9 @@
   // - depending on minimum, maximum and density, the new cells will have a chance to be open or closed
   // returns false when propagation stops
   function propagate (map, minimum, maximum, density, linearity) {
+    if (map.completed) {
+      return false;
+    }
 
     //determine whether we are expanding or closing off
     var expanding = map.openCount < minimum;
@@ -199,6 +177,14 @@
 
 
 
+  //default settings for a map
+  var DEFAULTS = {
+    max: undefined,
+    min: 20,
+    speed: 1,
+    linearity: 0,
+    density: 0
+  };
 
   /**
    * @param {number} width  - The width of the map
@@ -221,6 +207,17 @@
 
     //used during map generation for linearity
     this._propagationDirections = [];
+
+    //set defaults
+    this.settings = {};
+    for (var key in DEFAULTS) {
+      this.settings[key] = DEFAULTS[key];
+    }
+
+    this.openCount = 0;
+
+    //create start cell
+    this.first = openCell(this, this.width / 2, this.height / 2);
   };
 
   /**
@@ -237,7 +234,48 @@
   };
 
   /** @function generate
-   * This function starts the map generation process
+   * generates X open cells based on `settings.speed`
+   * Call this function in a loop until `map.completed` becomes true
+   */
+  Map.prototype.generate = function () {
+    if (this.completed) {
+      return;
+    }
+
+    for (var i = 0; i < this.settings.speed; i += 1) {
+      this.completed = !propagate(
+        this,
+        this.settings.min,
+        this.settings.max,
+        this.settings.density,
+        this.settings.linearity
+      );
+    }
+  };
+
+  /** @function generateAll
+   * Asynchronously generates the entire map
+   * @callback completed - Triggered when map generation is finished
+   * @callback update - Triggered on every generation step
+   */
+  Map.prototype.generateAll = function (completed, update) {
+    this.generate();
+
+    if (typeof update === 'function') {
+      update(this);
+    }
+
+    if (this.completed) {
+      if (typeof completed === 'function') {
+        completed(this);
+      }
+    } else {
+      setTimeout(this.generateAll.bind(this, completed, update), 10);
+    }
+  };
+
+  /** @function configure
+   * Configures the map   
    *
    * @param {object} [options] - Options for map generation
    * @param {number} [options.density=0] - Controls density of open cells. Value between 0 and 1. A lower value generates tunnels while a higher value generates more open space
@@ -245,33 +283,15 @@
    * @param {number} [options.speed=1] - Amount of cells that will be generated each loop
    * @param {number} [options.min=20] - Minimum amount of open cells that will be generated
    * @param {number} [options.max] - Maximum amount of open cells that will be generated
-   *
-   * @callback done - Called wen map is done generating
-   * @callback update - Called on each iteration step
    */
-  Map.prototype.generate = function (options, done, update) {
-    options = options || {};
+  Map.prototype.configure = function (options) {
+    if (typeof options !== 'object') {
+      return;
+    }
 
-    options.density = percent(options.density);
-    options.linearity = percent(options.linearity);
-
-    //determines how many cells will be placed on each iteration
-    //a higher value goes more quickly but could cause the browser to hang
-    options.speed = parseInt(options.speed, 10)|| 1;
-
-    options.min = parseInt(options.min, 10) || 20;
-    options.max = parseInt(options.max, 10);
-    options.max = Math.max(options.min, options.max);
-
-    //reset all arrays
-    this._activeIndexes.length = this._cells.length = 0;
-    this.openCount = 0;
-
-    //create start cell
-    this.first = openCell(this, this.width / 2, this.height / 2);
-
-    //kick off generator
-    generateStep(this, options, done, update);
+    for (var key in this.settings) {
+      this.settings[key] = options[key] || this.settings[key];
+    }
   };
 
   /** @function print
