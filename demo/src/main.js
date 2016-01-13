@@ -39,35 +39,31 @@ define([
     $('.levels').prepend(canvas);
     $(canvas).addClass('generating');
 
-    var width = Number($('[name=grid-width]').val());
-    var height = Number($('[name=grid-height]').val());
-    var min = Number($('[name=min]').val());
-    var max = Number($('[name=max]').val());
-    var density = Number($('[name=density]').val()) / 100;
-    var linearity = Number($('[name=linearity]').val()) / 100;
-    var speed = Number($('[name=speed]').val());
     var size = Number($('[name=block-size]').val());
 
     //create a new instance of our map
-    var map = new GRLG(width, height);
+    var map = new GRLG(
+        Number($('[name=grid-width]').val()),
+        Number($('[name=grid-height]').val())
+      );
+
+    //configure map
+    map.configure({
+      min: Number($('[name=min]').val()),
+      max: Number($('[name=max]').val()),
+      density: Number($('[name=density]').val()) / 100,
+      speed: Number($('[name=speed]').val()),
+      linearity: Number($('[name=linearity]').val()) / 100
+    });
 
     //generate map
-    map.generate(
-    {
-      min: min,
-      max: max,
-      density: density,
-      speed: speed,
-      linearity: linearity
-    },
-    //done
-    function () {
-      $(canvas).removeClass('generating');
-    },
-    //update
-    function () {
-      map.print(size, canvas);
-    });
+    map.generateAll(
+      function () { //done
+        $(canvas).removeClass('generating');
+      },
+      function () { //update
+        map.print(size, canvas);
+      });
 
     window.maps.push(map);
   }
