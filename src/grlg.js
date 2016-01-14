@@ -238,10 +238,6 @@
    * Call this function in a loop until `map.completed` becomes true
    */
   Map.prototype.generate = function () {
-    if (this.completed) {
-      return;
-    }
-
     for (var i = 0; i < this.settings.speed; i += 1) {
       this.completed = !propagate(
         this,
@@ -250,6 +246,10 @@
         this.settings.density,
         this.settings.linearity
       );
+
+      if (this.completed) {
+        return;
+      }
     }
   };
 
@@ -275,7 +275,7 @@
   };
 
   /** @function configure
-   * Configures the map   
+   * Configures the map
    *
    * @param {object} [options] - Options for map generation
    * @param {number} [options.density=0] - Controls density of open cells. Value between 0 and 1. A lower value generates tunnels while a higher value generates more open space
@@ -292,6 +292,13 @@
     for (var key in this.settings) {
       this.settings[key] = options[key] || this.settings[key];
     }
+
+    //validate settings
+    this.settings.density = percent(this.settings.density);
+    this.settings.linearity = percent(this.settings.linearity);
+    this.settings.speed = Math.max(1, parseInt(this.settings.speed, 10) || 1);
+    this.settings.min = Math.max(0, parseInt(this.settings.min, 10) || 0);
+    this.settings.max = Math.max(this.settings.min, parseInt(this.settings.max, 10)) || undefined;
   };
 
   /** @function print
