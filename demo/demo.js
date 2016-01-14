@@ -9732,8 +9732,6 @@ return jQuery;
     var expanding = map.openCount < minimum;
     var closing = maximum && map.openCount >= maximum;
 
-    var mainDirectionClosed = false;
-
     //determine whether it's safe to exit or if we need to break through a wall
     if (!map._activeIndexes.length) {
       if (expanding) {
