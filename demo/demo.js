@@ -9670,8 +9670,10 @@ return jQuery;
     var output = [];
     var index;
 
+    //offset determines which cardinal direction we will start with
     offset = parseInt(offset, 10) || Math.floor(Math.random() * 4);
 
+    //loop through cardinal directions
     for (var i = 0, length = CARDINAL_DIRECTIONS.length; i < length; i += 1) {
       index = (i + offset) % length;
 
@@ -9688,7 +9690,7 @@ return jQuery;
     return map._activeIndexes.splice(Math.floor(Math.random() * map._activeIndexes.length), 1)[0];
   }
 
-  //finds a closed cell on the map that touches an empty cell and turn it into an open cell so that we can continue expanding
+  //finds a closed cell on the map that touches an empty cell and turns it into an open cell so that we can continue expanding
   function breakThrough (map) {
     var x;
     var y;
@@ -9709,6 +9711,9 @@ return jQuery;
         map._cells[index] = true;
         map._activeIndexes.push(index);
         return index;
+      } else {
+        //remove cell from history - it won't be useful to us in the future
+        map._history.splice(i, 0);
       }
     }
   }
@@ -9726,6 +9731,8 @@ return jQuery;
     //determine whether we are expanding or closing off
     var expanding = map.openCount < minimum;
     var closing = maximum && map.openCount >= maximum;
+
+    var mainDirectionClosed = false;
 
     //determine whether it's safe to exit or if we need to break through a wall
     if (!map._activeIndexes.length) {
@@ -9745,52 +9752,78 @@ return jQuery;
     var x = index % map.width;
     var y = Math.floor(index / map.height);
 
+    //determine direction
     var propagationDirection = map._propagationDirections[index];
     if (Math.random() > linearity) {
       propagationDirection = undefined;
     }
-    var d = getOpenDirections(map, x, y, propagationDirection);
+    var directions = getOpenDirections(map, x, y, propagationDirection);
     var direction;
 
     //close cells against map borders
-    for (i = d.length - 1; i >= 0; i -= 1) {
-      direction = CARDINAL_DIRECTIONS[d[i]];
+    closeEdges(directions, map, x, y);
+
+    //ensure a minimum of 1 open cell when in expansion mode
+    if (expanding) {
+      //if our primary direction is closed, shuffle first
+      if (directions[0] === undefined) {
+        directions = shuffle(directions);
+      }
+
+      mandatoryCell(directions, map, x, y);
+    }
+
+    //shuffle remaining directions
+    directions = shuffle(directions);
+
+    //handle remaining cells based on density
+    for (i = directions.length - 1; i >= 0; i -= 1) {
+      if (directions[i] === undefined) {
+        continue;
+      }
+
+      direction = CARDINAL_DIRECTIONS[directions[i]];
+      if (!closing && Math.random() <= density) {
+        openCell(map, direction.x + x, direction.y + y, directions[i]);
+      } else {
+        closeCell(map, direction.x + x, direction.y + y, directions[i]);
+      }
+    }
+
+    return true;
+  }
+
+  //closes edge cells
+  function closeEdges (directions, map, x, y) {
+    var direction;
+    for (var i = directions.length - 1; i >= 0; i -= 1) {
+      direction = CARDINAL_DIRECTIONS[directions[i]];
+
       if (
         direction.x + x <= 0 ||
         direction.x + x >= map.width - 1 ||
         direction.y + y <= 0 ||
         direction.y + y >= map.height - 1
       ) {
-        closeCell(map, direction.x + x, direction.y + y, d[i]);
-        d.splice(i, 1);
+        closeCell(map, direction.x + x, direction.y + y, directions[i]);
+        directions[i] = undefined;
       }
     }
+  }
 
-    if (!d.length) {
-      return true;
-    }
-
-    //ensure a minimum of 1 open cell when in expansion mode
-    if (expanding) {
-      direction = CARDINAL_DIRECTIONS[d[0]];
-      openCell(map, direction.x + x, direction.y + y, d[0]);
-      d.splice(0, 1);
-    }
-
-    //shuffle remaining
-    d = shuffle(d);
-
-    //handle remaining cells based on density
-    for (i = d.length - 1; i >= 0; i -= 1) {
-      direction = CARDINAL_DIRECTIONS[d[i]];
-      if (!closing && Math.random() <= density) {
-        openCell(map, direction.x + x, direction.y + y, d[i]);
-      } else {
-        closeCell(map, direction.x + x, direction.y + y, d[i]);
+  //attempts to open at least once cell
+  function mandatoryCell (directions, map, x, y) {
+    var direction;
+    for (var i = 0; i < directions.length; i += 1) {
+      if (directions[i] === undefined) {
+        continue;
       }
-    }
 
-    return true;
+      direction = CARDINAL_DIRECTIONS[directions[i]];
+      openCell(map, direction.x + x, direction.y + y, directions[i]);
+      directions[i] = undefined;
+      return;
+    }
   }
 
   //marks x*y coordinate as being open
@@ -9802,7 +9835,6 @@ return jQuery;
     map._cells[index] = true;
     map._propagationDirections[index] = offset;
     map._activeIndexes.push(index);
-    map._history.push(index);
     map.last = index;
 
     return index;
@@ -9843,7 +9875,7 @@ return jQuery;
 
     this._cells = [];
 
-    //stores the order in which cells have been generated
+    //keeps a history of closed cells - used for break-through when needed
     this._history = [];
 
     //used during map generation
