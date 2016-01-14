@@ -1,0 +1,28 @@
+{
+  "name": "grlg",
+  "description": "A Generic Random Level Generator written in Javascript",
+  "main": "grlg.min.js",
+  "authors": [
+    "Thomas Vranckx"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "javascript",
+    "random",
+    "level",
+    "generator"
+  ],
+  "homepage": "https://github.com/furka/grlg",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
