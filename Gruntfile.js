@@ -28,18 +28,11 @@ module.exports = function(grunt) {
           ]
         }
       }
-    },
-
-    version: {
-      defaults: {
-        src: ['package.json']
-      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-requirejs');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-version');
 
   grunt.registerTask('default', ['uglify']);
   grunt.registerTask('build-demo', ['requirejs:demo']);
