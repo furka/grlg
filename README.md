@@ -67,7 +67,7 @@ map.getEnd();
 ```
 
 ```javascript
-map.print(size, canvas);
+map.print(scale, canvas);
 ```
 
 ## Usage
