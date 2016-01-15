@@ -299,7 +299,9 @@
     }
 
     if (this.completed) {
-      this._history.length = this._propagationDirections.length = 0;
+      delete this._history;
+      delete this._propagationDirections;
+      delete this._activeIndexes;
     }
   };
 
