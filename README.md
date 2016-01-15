@@ -29,9 +29,9 @@ GRLG is an asynchronous map generator that can be used in HTML5 games or other J
 
 ## Features
 
-- Generates a 2-dimensional map of open/closed cells
+- Generates a 2-dimensional map of open/closed cells with a start and end point
 - Generate windy cave tunnels, sewer networks, open areas or anything in between
-- All open cells are guaranteed to connect to one another, no inaccessible areas
+- All open cells are guaranteed to be accessible, no disconnected cells
 - Can be integrated into a main loop or run independently
 - No dependencies
 - Non-deterministic, combine with a library like [seedrandom.js](https://github.com/davidbau/seedrandom) for deterministic results
@@ -56,6 +56,14 @@ map.generateAll(completed, update);
 
 ```javascript
 map.get(x, y);
+```
+
+```javascript
+map.getStart();
+```
+
+```javascript
+map.getStart();
 ```
 
 ```javascript

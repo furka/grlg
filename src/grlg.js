@@ -250,7 +250,7 @@
     this.first = openCell(this, this.width / 2, this.height / 2);
   };
 
-  /**
+  /** @function get
    * Determines whether an x*y coordinate has an open cell
    * @param {number} x - The x coordinate
    * @param {number} y - The x coordinate
@@ -261,6 +261,26 @@
     y = Math.floor(y);
 
     return this._cells[x + y * this.width];
+  };
+
+  /** @function getStart
+   * @return returns an object with x and y coordinates of start cell
+   */
+  Map.prototype.getStart = function () {
+    return {
+      x: this.first % this.width,
+      y: Math.floor(this.first / this.height)
+    };
+  };
+
+  /** @function getEnd
+   * @return returns an object with x and y coordinates of end cell
+   */
+  Map.prototype.getEnd = function () {
+    return {
+      x: this.last % this.width,
+      y: Math.floor(this.last / this.height)
+    };
   };
 
   /** @function generate
