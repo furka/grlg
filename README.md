@@ -63,7 +63,7 @@ map.getStart();
 ```
 
 ```javascript
-map.getStart();
+map.getEnd();
 ```
 
 ```javascript
