@@ -9932,7 +9932,7 @@ return jQuery;
    * Call this function in a loop until `map.completed` becomes true
    */
   Map.prototype.generate = function () {
-    for (var i = 0; i < this.settings.speed; i += 1) {
+    for (var i = 0; i < this.settings.speed && !this.completed; i += 1) {
       this.completed = !propagate(
         this,
         this.settings.min,
@@ -9940,10 +9940,10 @@ return jQuery;
         this.settings.density,
         this.settings.linearity
       );
+    }
 
-      if (this.completed) {
-        return;
-      }
+    if (this.completed) {
+      this._history.length = this._propagationDirections.length = 0;
     }
   };
 
