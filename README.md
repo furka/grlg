@@ -163,7 +163,7 @@ map.configure(options);
 ```
 Once instantiated, a map's size cannot be changed.
 
-Note that you can change map configuration at any time. You can produce interesting maps by adjusting `density` or `linearity` during map generation.
+Note that you can change map configuration at any time. Interesting results can be produced by adjusting `density` or `linearity` during map generation.
 
 
 ## `options.min`
