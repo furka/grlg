@@ -1,6 +1,6 @@
 {
   "name": "grlg",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "A Generic Random Level Generator written in Javascript",
   "main": "grlg.min.js",
   "keywords": [
