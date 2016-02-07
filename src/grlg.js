@@ -380,7 +380,7 @@
       }
 
       x = i % this.width;
-      y = Math.floor(i / this.height);
+      y = Math.floor(i / this.width);
 
       if (i === this.first) {
         ctx.fillStyle = 'rgba(0,255,255,1)';
