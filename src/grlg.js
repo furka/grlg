@@ -55,7 +55,7 @@
     for (var i = map._history.length - 1; i >= 0; i -= 1) {
       index = map._history[i];
       x = index % map.width;
-      y = Math.floor(index / map.height);
+      y = Math.floor(index / map.width);
 
       if (
         x > 0 &&
@@ -104,7 +104,7 @@
     //pick a cell to expand
     var index = grabActiveIndex(map);
     var x = index % map.width;
-    var y = Math.floor(index / map.height);
+    var y = Math.floor(index / map.width);
 
     //determine direction
     var propagationDirection = map._propagationDirections[index];
