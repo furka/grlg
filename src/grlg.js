@@ -55,7 +55,7 @@
     for (var i = map._history.length - 1; i >= 0; i -= 1) {
       index = map._history[i];
       x = index % map.width;
-      y = Math.floor(index / map.height);
+      y = Math.floor(index / map.width);
 
       if (
         x > 0 &&
@@ -104,7 +104,7 @@
     //pick a cell to expand
     var index = grabActiveIndex(map);
     var x = index % map.width;
-    var y = Math.floor(index / map.height);
+    var y = Math.floor(index / map.width);
 
     //determine direction
     var propagationDirection = map._propagationDirections[index];
@@ -247,7 +247,7 @@
     this.openCount = 0;
 
     //create start cell
-    this.first = openCell(this, this.width / 2, this.height / 2);
+    this.first = openCell(this, Math.floor(this.width / 2), Math.floor(this.height / 2));
   };
 
   /** @function get
@@ -352,6 +352,7 @@
     this.settings.min = Math.max(0, parseInt(this.settings.min, 10) || 0);
     this.settings.max = Math.max(this.settings.min, parseInt(this.settings.max, 10)) || undefined;
   };
+  Map.prototype.config = Map.prototype.configure;
 
   /** @function print
    * returns a canvas element with visual representation of the map
