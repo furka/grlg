@@ -74,6 +74,11 @@
     }
   }
 
+  //places the starting cell
+  function placeStartCell (map) {
+    map.first = openCell(map, map.settings.start.x, map.settings.start.y);
+  }
+
   //propagates around a single cell
   // - picks an active cell
   // - generates its surrounding cells
@@ -82,6 +87,12 @@
   function propagate (map, minimum, maximum, density, linearity) {
     if (map.completed) {
       return false;
+    }
+
+    //place first cell
+    if (!map.first) {
+      placeStartCell(map);
+      return true;
     }
 
     //determine whether we are expanding or closing off
@@ -243,11 +254,12 @@
     for (var key in DEFAULTS) {
       this.settings[key] = DEFAULTS[key];
     }
+    this.settings.start = {
+      x: Math.floor(this.width / 2),
+      y: Math.floor(this.height / 2)
+    };
 
     this.openCount = 0;
-
-    //create start cell
-    this.first = openCell(this, Math.floor(this.width / 2), Math.floor(this.height / 2));
   };
 
   /** @function get
@@ -346,6 +358,9 @@
     }
 
     //validate settings
+    this.settings.start = this.settings.start || {};
+    this.settings.start.x = Math.floor(Math.max(1, Math.min(this.settings.start.x, this.width - 2))) || Math.floor(this.width / 2);
+    this.settings.start.y = Math.floor(Math.max(1, Math.min(this.settings.start.y, this.height - 2))) || Math.floor(this.height / 2);
     this.settings.density = percent(this.settings.density);
     this.settings.linearity = percent(this.settings.linearity);
     this.settings.speed = Math.max(1, parseInt(this.settings.speed, 10) || 1);

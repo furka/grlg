@@ -8,6 +8,7 @@ define([
   'use strict';
 
   window.maps = [];
+  window.GRLG = GRLG;
 
   //loads a preset
   function preset (scale, size, min, max, density, linearity, speed) {

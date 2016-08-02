@@ -9699,7 +9699,7 @@ return jQuery;
     for (var i = map._history.length - 1; i >= 0; i -= 1) {
       index = map._history[i];
       x = index % map.width;
-      y = Math.floor(index / map.height);
+      y = Math.floor(index / map.width);
 
       if (
         x > 0 &&
@@ -9718,6 +9718,11 @@ return jQuery;
     }
   }
 
+  //places the starting cell
+  function placeStartCell (map) {
+    map.first = openCell(map, map.settings.start.x, map.settings.start.y);
+  }
+
   //propagates around a single cell
   // - picks an active cell
   // - generates its surrounding cells
@@ -9726,6 +9731,12 @@ return jQuery;
   function propagate (map, minimum, maximum, density, linearity) {
     if (map.completed) {
       return false;
+    }
+
+    //place first cell
+    if (!map.first) {
+      placeStartCell(map);
+      return true;
     }
 
     //determine whether we are expanding or closing off
@@ -9748,7 +9759,7 @@ return jQuery;
     //pick a cell to expand
     var index = grabActiveIndex(map);
     var x = index % map.width;
-    var y = Math.floor(index / map.height);
+    var y = Math.floor(index / map.width);
 
     //determine direction
     var propagationDirection = map._propagationDirections[index];
@@ -9887,11 +9898,12 @@ return jQuery;
     for (var key in DEFAULTS) {
       this.settings[key] = DEFAULTS[key];
     }
+    this.settings.start = {
+      x: Math.floor(this.width / 2),
+      y: Math.floor(this.height / 2)
+    };
 
     this.openCount = 0;
-
-    //create start cell
-    this.first = openCell(this, this.width / 2, this.height / 2);
   };
 
   /** @function get
@@ -9990,12 +10002,16 @@ return jQuery;
     }
 
     //validate settings
+    this.settings.start = this.settings.start || {};
+    this.settings.start.x = Math.floor(Math.max(1, Math.min(this.settings.start.x, this.width - 2))) || Math.floor(this.width / 2);
+    this.settings.start.y = Math.floor(Math.max(1, Math.min(this.settings.start.y, this.height - 2))) || Math.floor(this.height / 2);
     this.settings.density = percent(this.settings.density);
     this.settings.linearity = percent(this.settings.linearity);
     this.settings.speed = Math.max(1, parseInt(this.settings.speed, 10) || 1);
     this.settings.min = Math.max(0, parseInt(this.settings.min, 10) || 0);
     this.settings.max = Math.max(this.settings.min, parseInt(this.settings.max, 10)) || undefined;
   };
+  Map.prototype.config = Map.prototype.configure;
 
   /** @function print
    * returns a canvas element with visual representation of the map
@@ -10023,7 +10039,7 @@ return jQuery;
       }
 
       x = i % this.width;
-      y = Math.floor(i / this.height);
+      y = Math.floor(i / this.width);
 
       if (i === this.first) {
         ctx.fillStyle = 'rgba(0,255,255,1)';
@@ -10074,6 +10090,7 @@ define('main',[
   'use strict';
 
   window.maps = [];
+  window.GRLG = GRLG;
 
   //loads a preset
   function preset (scale, size, min, max, density, linearity, speed) {
