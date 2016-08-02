@@ -85,11 +85,12 @@ Configure map
 ```javascript
 //all settings are optional
 map.configure({
-  min: 20,         //minimum amount of open cells generated
-  max: 50,         //maximum amount of open cells generated
-  speed: 1,        //amount of cells generated on each tick
-  density: 0,      //value between 0 and 1, 0 means more tunnels
-  linearity: 0     //value between 0 and 1, 1 means straight tunnels
+  min: 20,              //minimum amount of open cells generated
+  max: 50,              //maximum amount of open cells generated
+  speed: 1,             //amount of cells generated on each tick
+  density: 0,           //value between 0 and 1, 0 means more tunnels
+  linearity: 0,          //value between 0 and 1, 1 means straight tunnels
+  start: {x: 10, y: 10} //determine the position of the starting cell
 });
 ```
 Generate map within your main loop
@@ -179,7 +180,7 @@ Maximum amount of open cells on your map. When this number of cells has been ach
 ## `options.speed`
 Integer value greater than `0`, default: `1`
 
-This determines how many cells will be generated whenever `map.generate()` is called. 
+This determines how many cells will be generated whenever `map.generate()` is called.
 A higher number will generate more quickly, but could cause the browser to become unresponsive.
 
 ## `options.density`
@@ -193,6 +194,17 @@ Floating number between `0` and `1`, default: `0`
 This value controls how straight tunnels will be. A value of `0` generates fully random tunnels, while a value of `1` will generate straight tunnels.
 
 Note that `linearity` and `density` affect each other; `linearity` will have a lesser effect with a higher `density`.
+
+## `options.start`
+Object with `x` and `y` property.
+
+`x` must be greater than `0` and smaller than `map.width - 1`
+
+`y` must be greater than `0` and smaller than `map.height - 1`
+
+Note: these values are automatically clamped to valid numbers
+
+This determines where the map will start generating from, by default it starts in the middle.
 
 ## License
 grlg.js is licensed under the MIT license. You may use it for commercial use.
